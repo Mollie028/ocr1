@@ -25,18 +25,23 @@ app.add_middleware(
 ocr_model = PaddleOCR(use_angle_cls=True, lang='ch', det_db_box_thresh=0.3)
 whisper_model = WhisperModel("small", device="cpu", compute_type="int8")
 
-DB_URL = os.getenv("DATABASE_URL")
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST"),
+    "dbname": os.getenv("DB_NAME"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "port": os.getenv("DB_PORT")
+}
 
 def get_conn():
-    if not DB_URL:
-        raise Exception("❌ DATABASE_URL 未設定")
-    return psycopg2.connect(DB_URL)
+    return psycopg2.connect(**DB_CONFIG)
 
 def clean_ocr_text(result):
     lines = []
     try:
         if isinstance(result, list):
             for entry in result:
+                # 新版 PaddleOCR 的 rec_texts 結果在 entry["rec_texts"]
                 texts = entry.get("rec_texts", [])
                 for t in texts:
                     t = t.strip()
@@ -55,6 +60,7 @@ async def ocr_endpoint(file: UploadFile = File(...), user_id: int = 1):
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         img = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
 
+        # ✅ 圖片若太大就自動縮小，加快辨識速度
         MAX_SIDE = 1600
         height, width = img.shape[:2]
         max_side = max(height, width)
@@ -65,7 +71,9 @@ async def ocr_endpoint(file: UploadFile = File(...), user_id: int = 1):
             img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
             print(f"🔧 圖片已縮小至：{img.shape}")
 
+        # 🔍 執行 OCR
         result = ocr_model.ocr(img)
+
         print("\n原始 OCR result：", result)
         final_text = clean_ocr_text(result)
         print("\n OCR 最終擷取結果：", final_text)
@@ -73,6 +81,7 @@ async def ocr_endpoint(file: UploadFile = File(...), user_id: int = 1):
         if not final_text:
             raise HTTPException(status_code=400, detail="❌ OCR 沒有辨識出任何內容")
 
+        # ✅ 寫入資料庫
         conn = get_conn()
         cur = conn.cursor()
         cur.execute("INSERT INTO business_cards (user_id, ocr_text) VALUES (%s, %s) RETURNING id", (user_id, final_text))
@@ -85,8 +94,9 @@ async def ocr_endpoint(file: UploadFile = File(...), user_id: int = 1):
     except Exception as e:
         import traceback
         print("❌ OCR 發生錯誤：", e)
-        traceback.print_exc()
+        traceback.print_exc()  # 這行會印出完整錯誤堆疊資訊（哪一行出錯）
         raise HTTPException(status_code=500, detail=f"OCR 發生錯誤：{e}")
+            
 
 @app.post("/extract")
 async def extract_fields(payload: dict):
@@ -94,6 +104,8 @@ async def extract_fields(payload: dict):
     record_id = payload.get("id")
     if not text or not record_id:
         raise HTTPException(status_code=400, detail="❌ 缺少文字或 ID")
+
+    print("\n 傳送給 LLaMA 的內容：\n", text)
 
     llama_api = "https://api.together.xyz/v1/chat/completions"
     headers = {
@@ -124,10 +136,14 @@ async def extract_fields(payload: dict):
         res = requests.post(llama_api, headers=headers, json=body)
         res.raise_for_status()
         res_json = res.json()
+
         parsed_text = res_json["choices"][0]["message"]["content"].strip()
+        print("\n LLaMA 回應：\n", parsed_text)
+
         start = parsed_text.find("{")
         end = parsed_text.rfind("}") + 1
         parsed_json = json.loads(parsed_text[start:end])
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLaMA 解析失敗：{e}")
 
@@ -184,4 +200,4 @@ async def whisper_endpoint(file: UploadFile = File(...), user_id: int = 1):
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("ocr_api:app", host="0.0.0.0", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port)
