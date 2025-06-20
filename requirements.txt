@@ -1,5 +1,5 @@
 fastapi
-uvicorn
+uvicorn[standard]
 paddleocr<3.0
 paddlepaddle==2.6.1
 pillow
