@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-paddleocr
+paddleocr<3.0
 paddlepaddle==2.6.1
 pillow
 python-multipart
