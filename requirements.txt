@@ -1,11 +1,11 @@
 fastapi
 uvicorn
 paddleocr
-paddlepaddle
-faster-whisper
-python-multipart
+paddlepaddle==2.6.1
 pillow
-opencv-python-headless==4.7.0.72
-numpy
-requests
+python-multipart
 psycopg2-binary
+faster-whisper
+numpy
+opencv-python-headless==4.7.0.72
+requests
