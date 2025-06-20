@@ -10,4 +10,3 @@ numpy
 requests
 sentence-transformers
 psycopg2-binary
-pdfplumber
