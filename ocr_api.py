@@ -34,7 +34,12 @@ DB_CONFIG = {
 }
 
 def get_conn():
+    safe_config = DB_CONFIG.copy()
+    safe_config["password"] = "****"  #
+    print("📦 資料庫設定：", safe_config)
+
     return psycopg2.connect(**DB_CONFIG)
+
 
 def clean_ocr_text(result):
     lines = []
