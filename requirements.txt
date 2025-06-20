@@ -10,6 +10,6 @@ numpy
 requests
 sentence-transformers
 psycopg2-binary
-passlib[bcrypt]
-python-jose[cryptography]
 
+opencv-python-headless==4.7.0.72
+opencv-python==none
