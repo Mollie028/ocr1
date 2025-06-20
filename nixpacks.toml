@@ -1,0 +1,5 @@
+
+[phases.setup]
+# 使用 apt Provider 來安裝 Debian/Ubuntu 套件
+# pkgs 是 NixOS packages, aptPkgs 是 Debian/Ubuntu packages
+aptPkgs = ["libgl1-mesa-glx", "libglib2.0-0"]
