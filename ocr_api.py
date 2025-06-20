@@ -50,8 +50,6 @@ def clean_ocr_text(result):
     cleaned = "\n".join(lines)
     print("最終擷取內容：", repr(cleaned))
     return cleaned
-", repr(cleaned))
-    return cleaned
 
 def extract_fields_from_llm(text):
     llama_api = "https://api.together.xyz/v1/chat/completions"
