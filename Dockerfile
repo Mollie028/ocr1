@@ -1,4 +1,4 @@
-FROM python:3.9-slim-buster # 或基於 Debian/Ubuntu 的基礎映像檔
+FROM python:3.9-slim-buster
 
 # 如果軟體包不在預設軟體倉庫中，請添加任何必要的軟體倉庫
 # RUN echo "deb http://archive.ubuntu.com/ubuntu focal main universe" >> /etc/apt/sources.list
