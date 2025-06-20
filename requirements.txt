@@ -8,5 +8,4 @@ pillow
 opencv-python-headless==4.7.0.72
 numpy
 requests
-sentence-transformers
 psycopg2-binary
