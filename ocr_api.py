@@ -40,17 +40,17 @@ def clean_ocr_text(result):
     lines = []
     try:
         if isinstance(result, list):
-            for entry in result:
-                if entry and isinstance(entry, dict):
-                    texts = entry.get("rec_texts", [])
-                    for t in texts:
-                        t = t.strip()
-                        if t and not any(x in t.lower() for x in ["www", "fax", "網址", "傳真"]):
-                            lines.append(t)
+            for line in result[0]:  # ✅ result[0] 是所有文字區塊
+                text = line[1][0]   # ✅ 取出辨識結果的文字（line[1] 是 tuple: (text, score)）
+                text = text.strip()
+                if text and not any(x in text.lower() for x in ["www", "fax", "網址", "傳真"]):
+                    lines.append(text)
     except Exception as e:
         print("❌ clean_ocr_text 錯誤：", e)
     cleaned = "\n".join(lines)
     print("最終擷取內容：", repr(cleaned))
+    return cleaned
+", repr(cleaned))
     return cleaned
 
 def extract_fields_from_llm(text):
