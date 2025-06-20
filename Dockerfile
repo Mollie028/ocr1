@@ -1,18 +1,25 @@
-FROM python:3.9-slim-buster
+# 使用輕量級的 Python 基底映像
+FROM python:3.10-slim
 
-# 如果軟體包不在預設軟體倉庫中，請添加任何必要的軟體倉庫
-# RUN echo "deb http://archive.ubuntu.com/ubuntu focal main universe" >> /etc/apt/sources.list
+# 安裝 PaddleOCR 所需系統套件（libgl1 + libgomp1 + libgthread）
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libgomp1 \
+    libglib2.0-0 \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1-mesa-glx \
-    # 其他依賴項
-
-# 複製您的應用程式碼
-COPY . /app
-
-# 安裝 Python 依賴項
+# 設定工作目錄
 WORKDIR /app
-RUN pip install -r requirements.txt
 
-# 定義您的進入點
-CMD ["python", "your_app.py"]
+# 複製依賴檔案並安裝
+COPY requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# 複製應用程式原始碼
+COPY . .
+
+# 用 uvicorn 啟動 FastAPI 應用，注意：不要手寫 port 數字
+CMD ["python", "-m", "uvicorn", "ocr_api:app", "--host", "0.0.0.0", "--port", "8000"]
+
+
