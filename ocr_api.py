@@ -225,6 +225,36 @@ async def extract_fields(payload: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"寫入資料庫失敗：{e}")
 
+
+@app.get("/test_db")
+def test_db_connection():
+    try:
+        # ✅ 印出目前的連線參數（不包含密碼）
+        safe_config = DB_CONFIG.copy()
+        safe_config["password"] = "****"
+        print("🔍 測試連線參數：", safe_config)
+
+        # ✅ 嘗試連線並讀取 business_cards 資料表
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT id, user_id, ocr_text FROM business_cards ORDER BY id DESC LIMIT 5")
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        return {"status": "success", "latest_records": rows}
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return {"status": "error", "message": str(e)}
+
+
+
+
+
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
