@@ -21,8 +21,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-ocr_model = PaddleOCR(use_angle_cls=True, lang='ch', det_db_box_thresh=0.3)
+ocr_model = PaddleOCR(use_angle_cls=True, lang='ch', show_log=False)
 whisper_model = WhisperModel("small", device="cpu", compute_type="int8")
 
 DB_CONFIG = {
